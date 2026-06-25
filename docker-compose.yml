@@ -1,0 +1,53 @@
+services:
+  database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: verySecretPassword
+      POSTGRES_USER: administrator
+      POSTGRES_DB: GCAS
+    volumes: 
+      - db_data:/var/lib/postgresql
+  app:
+    build: .
+    restart: always
+    volumes:
+      - ./credentials:/root/.aws/credentials
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql://administrator:verySecretPassword@database:5432/GCAS"
+      CELERY_BROKER_URL: sqs://
+    ports: 
+      - "8080:8080"
+    depends_on:
+      - database
+    
+  worker-urgent:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: always
+    volumes:
+      - ./credentials:/root/.aws/credentials
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql://administrator:verySecretPassword@database:5432/GCAS"
+      CELERY_BROKER_URL: sqs://
+    command: pipx run poetry run celery --app GCAS.tasks.eng worker --loglevel=info -Q eng-urgent
+    depends_on:
+      - database
+
+  worker-non-urgent:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: always
+    volumes:
+      - ./credentials:/root/.aws/credentials
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql://administrator:verySecretPassword@database:5432/GCAS"
+      CELERY_BROKER_URL: sqs://
+    command: pipx run poetry run celery --app GCAS.tasks.eng worker --loglevel=info -Q eng-non-urgent
+    depends_on:
+      - database
+
+volumes:
+  db_data:

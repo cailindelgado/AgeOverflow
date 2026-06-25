@@ -1,0 +1,16 @@
+FROM python:3.13-slim
+
+ARG ENGINE_VERSION=v1.0.0
+
+RUN apt-get update && apt-get install -y pipx curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN ARCH=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && curl -o engine -L https://github.com/CSSE6400/ageoverflow-engine/releases/download/${ENGINE_VERSION}/engine-${ENGINE_VERSION}-linux-${ARCH} && chmod +x engine
+RUN pipx ensurepath
+
+RUN pipx install celery poetry
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+RUN pipx run poetry install --no-root
+
+COPY GCAS GCAS

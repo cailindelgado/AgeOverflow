@@ -1,0 +1,54 @@
+name: Cloud Assignment
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy: Do you want us to deploy your terraform?'
+        required: true
+        type: boolean
+      deployed-url:
+        description: 'Deploy[Optional]: URL of the deployed instance'
+        required: false
+        type: string
+      functionality:
+        description: 'Test: functionality (Stage 2/3)'
+        required: false
+        type: boolean
+        default: false
+      load:
+        description: 'Test: load (Stage 3)'
+        required: false
+        type: boolean
+        default: false
+      aws-access-key-id:
+        description: 'Lab: AWS Access Key ID'
+        required: false
+        type: string
+      aws-secret-access-key:
+        description: 'Lab: AWS Secret Access Key'
+        required: false
+        type: string
+      aws-session-token:
+        description: 'Lab: AWS Session Token'
+        required: false
+        type: string
+
+jobs:
+  lint:
+    uses: csse6400/workflows/.github/workflows/lint.yml@main
+    secrets: inherit
+
+  deploy:
+    uses: csse6400/workflows/.github/workflows/cloud.yml@main
+    secrets: inherit
+    with:
+      assignment: 'ageoverflow'
+      deploy: ${{ inputs.deploy || false }}
+      deployed-url: ${{ inputs.deployed-url || '' }}
+      functionality: ${{ inputs.functionality || false }}
+      load: ${{ inputs.load || false }}
+      aws-access-key-id: ${{ inputs.aws-access-key-id || '' }}
+      aws-secret-access-key: ${{ inputs.aws-secret-access-key || '' }}
+      aws-session-token: ${{ inputs.aws-session-token || '' }}
